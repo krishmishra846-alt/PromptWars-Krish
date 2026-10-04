@@ -29,7 +29,7 @@ def test_health_api_both_endpoints(client):
         assert res.status_code == 200
         data = res.json()
         assert data["status"] == "healthy"
-        assert data["service"] == "BlindSpot AI"
+        assert data["service"] == "Chitragupta.AI"
         assert "compliance" in data
         assert data["compliance"]["accessibility"] == "WCAG 2.1 AA"
         assert data["compliance"]["google_services"] == "Google Generative AI SDK active"

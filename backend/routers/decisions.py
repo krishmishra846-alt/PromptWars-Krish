@@ -146,6 +146,8 @@ def compute_reasoning_features(raw_reasoning: str, analysis: Dict[str, Any], cat
         "contradiction_count": contradictions_count,
         "missing_factor_count": missing_factors_count,
         "future_impact_count": future_impacts_count,
+        "blind_spot_count": blind_spots_count,
+        "blind_spots_count": blind_spots_count,
         "evidence_coverage": evidence_coverage,
         "assumption_ratio": assumption_ratio,
         "coverage_score": coverage_score,
@@ -577,7 +579,7 @@ def _normalize_analysis_data(data: Dict[str, Any], category: str) -> Dict[str, A
             {"task": "Identify what one piece of negative news would make you walk away", "importance": "Medium"}
         ]
 
-    return {
+    result = {
         "decision_type": category,
         "biggest_unanswered_question": biggest_unanswered_question,
         "top_considerations": top_considerations,
@@ -612,6 +614,9 @@ def _normalize_analysis_data(data: Dict[str, Any], category: str) -> Dict[str, A
         "counterfactuals": counterfactuals,
         "reflection_questions": reflection_questions
     }
+    features = compute_reasoning_features("", result, category)
+    result["coverage_score"] = features.get("coverage_score", 50)
+    return result
 
 def _build_deterministic_fallback_analysis(title: str, reasoning: str, category: str, matters_most: List[str]) -> Dict[str, Any]:
     """Robust fallback cognitive deconstruction ensuring zero downtime."""

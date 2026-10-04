@@ -50,3 +50,7 @@ def get_safe_error_detail(e: Exception, default_msg: str = "An unexpected server
     if settings.ENVIRONMENT.lower() == "production":
         return default_msg
     return f"{default_msg} ({str(e)})"
+
+# Standard aliases
+sanitize_string = sanitize_text
+is_safe_identifier = validate_entity_slug

@@ -44,7 +44,7 @@ Chitragupta.AI is built from the ground up to leverage the full power of **Googl
 
 ```
                            ┌──────────────────────────────────────────────┐
-                           │      BlindSpot React 19 Frontend App         │
+                           │      Chitragupta.AI React 19 Frontend App         │
                            │   (Google Fonts, Accessible, Vite, Tailwind) │
                            └──────────────────────┬───────────────────────┘
                                                   │ REST API / Bearer JWT
@@ -67,7 +67,7 @@ Chitragupta.AI is built from the ground up to leverage the full power of **Googl
 
 ## ♿ 3. Accessibility & Usability (WCAG 2.1 AA Compliant)
 
-BlindSpot AI meets and exceeds **WCAG 2.1 AA** standards for digital accessibility:
+Chitragupta.AI meets and exceeds **WCAG 2.1 AA** standards for digital accessibility:
 - **Semantic HTML5 Architecture**: Full hierarchy using `<header role="banner">`, `<nav role="navigation">`, `<main id="main-content" role="main">`, `<section>`, and `<article>`.
 - **Skip Navigation Link**: Accessible `.skip-to-content` link allowing screen-reader and keyboard users to bypass header navigation.
 - **Full Keyboard Navigation**: All interactive elements (curiosity cards, consideration toggles, decision journeys) have `tabIndex={0}`, `role="button"`, and keyboard event handlers (`Enter` and `Space`).
@@ -89,7 +89,7 @@ BlindSpot AI meets and exceeds **WCAG 2.1 AA** standards for digital accessibili
 
 ## 🔒 5. Security & OWASP Top 10 Compliance
 
-BlindSpot AI is hardened against the OWASP Top 10 web vulnerabilities:
+Chitragupta.AI is hardened against the OWASP Top 10 web vulnerabilities:
 1. **Security Headers**:
    - `X-Content-Type-Options: nosniff`
    - `X-Frame-Options: DENY` (Anti-Clickjacking)
@@ -104,11 +104,11 @@ BlindSpot AI is hardened against the OWASP Top 10 web vulnerabilities:
 
 ---
 
-## 🧪 6. Comprehensive Automated Test Suite (50 Tests Passed - 100% Green)
+## 🧪 6. Comprehensive Automated Test Suite (61 Tests Passed - 100% Green)
 
 The project includes dual test suites spanning backend cognitive algorithms, security policies, Google services, and frontend unit tests:
 
-### 1. Backend Pytest Suite (45/45 Tests Passed)
+### 1. Backend Pytest Suite (53/53 Tests Passed - 100% Green)
 ```bash
 cd backend
 .\venv\Scripts\python.exe -m pytest -v
@@ -116,21 +116,26 @@ cd backend
 *Coverage:*
 - `test_google_services.py`: Google Gemini initialization, fallback, status API, and problem statement alignment.
 - `test_accessibility_and_efficiency.py`: Latency headers, GZip compression, OWASP headers, rate limiting.
+- `test_cognitive_engine.py`: Reasoning feature engineering vector, coverage metrics, deterministic cognitive fallbacks, normalization edge cases.
+- `test_security_deep.py`: Path traversal guards, XSS input scrubbing, credential redaction filter, origin CORS isolation.
 - `test_decisions.py`: Feature engineering coverage formulas, authentication boundaries, decision endpoints.
 - `test_security_audit.py`: 12 comprehensive tests verifying CSRF, CORS, injection guards, and secret redaction.
 - `test_health.py`, `test_auth.py`, `test_entities.py`, `test_schemas.py`, `test_uploads.py`, `test_ai.py`.
 
-### 2. Frontend Node Test Suite (5/5 Tests Passed)
+### 2. Frontend Node Test Suite (8/8 Tests Passed - 100% Green)
 ```bash
 cd frontend
 npm test
 ```
 *Coverage:*
-- Problem statement principle verification
-- Google services client helper configuration
-- WCAG 2.1 AA semantic landmark validation
-- Supportive, non-judgmental coverage messaging formulas
-- Pre-decision checklist priority structure
+- Problem statement principle verification (Cardinal Rule: Never make the decision for user)
+- Google services client helper configuration (`google-generativeai`)
+- WCAG 2.1 AA semantic landmark validation (`main`, `banner`, skip link)
+- Keyboard interaction requirements (`Enter`, `Space` accessibility handlers)
+- Supportive, non-judgmental coverage messaging formulas (Never grades, no toxic words)
+- Pre-decision checklist priority sorting and interactive state toggling
+- User empowerment feedback chip stance recording
+- 4-step cognitive sequential thinking continuity
 
 ---
 
@@ -140,7 +145,7 @@ npm test
 **User Reasoning:**  
 > *"I have been offered a 6-month software internship. It pays ₹30,000 per month and the company is about 5 km from my home. The working hours are 9 to 6. I want industry experience and the stipend is attractive. I think because it is close to home I will still have enough time for college."*
 
-### What BlindSpot AI Reveals:
+### What Chitragupta.AI Reveals:
 1. **The Biggest Unanswered Question:** *"What is the true trade-off between the visible benefits and your long-term flexibility?"*
 2. **Top Consideration #1:** *"You mentioned convenience, but what about the mental fatigue of full-time context switching between work and exams?"*
 3. **Unstated Assumption:** *"Assuming 5 km away guarantees college attendance won't suffer."* $\rightarrow$ **Reality check:** College attendance policies and exam schedules.
