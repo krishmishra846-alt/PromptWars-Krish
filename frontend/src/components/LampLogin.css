@@ -1,0 +1,1072 @@
+/* ==========================================================================
+   INTERACTIVE DIGITAL FLOOR LAMP LOGIN UI
+   "A digital floor lamp acts as a creative toggle to reveal a hidden login form"
+   Includes smooth cinematic physics & runaway dodging login button
+   ========================================================================== */
+
+/* Overall Dark Viewport Room */
+.lamp-room-viewport {
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #06070a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  transition: background-color 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lamp-room-viewport.lamp-on {
+  background-color: #0b0d13;
+}
+
+/* Floor Horizon & Perspective Ground */
+.lamp-room-floor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 28vh;
+  background: linear-gradient(to bottom, rgba(18, 22, 31, 0.6) 0%, rgba(8, 10, 15, 0.98) 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Floor Ambient Light Pool beneath the Lamp & Form */
+.lamp-floor-glow {
+  position: absolute;
+  bottom: 3vh;
+  left: 10%;
+  width: 80vw;
+  max-width: 1150px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(255, 204, 80, 0.32) 0%, rgba(245, 158, 11, 0.14) 38%, rgba(217, 119, 6, 0.04) 65%, transparent 80%);
+  filter: blur(32px);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1), transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.lamp-room-viewport.lamp-on .lamp-floor-glow {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Ambient Room Bloom when Lamp is On */
+.lamp-ambient-bloom {
+  position: absolute;
+  top: 10%;
+  left: 18%;
+  width: 65vw;
+  height: 65vh;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.09) 0%, rgba(245, 158, 11, 0.025) 45%, transparent 70%);
+  filter: blur(90px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.95s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 1;
+}
+
+.lamp-room-viewport.lamp-on .lamp-ambient-bloom {
+  opacity: 1;
+}
+
+/* Main Interactive Stage Container */
+.lamp-stage {
+  position: relative;
+  width: 100%;
+  max-width: 1320px;
+  height: 100%;
+  max-height: 820px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4rem;
+  z-index: 10;
+}
+
+/* ==========================================================================
+   THE FLOOR LAMP (SILHOUETTE & INTERACTIVE TOGGLE)
+   ========================================================================== */
+.lamp-container {
+  position: relative;
+  width: 440px;
+  height: 680px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 15;
+}
+
+/* Lamp Base Shadow on Floor */
+.lamp-base-shadow {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 50%;
+  filter: blur(9px);
+  z-index: 1;
+}
+
+/* SVG Lamp Graphic Element */
+.lamp-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  z-index: 2;
+}
+
+/* Lamp Structural Styling */
+.lamp-metal-part {
+  fill: #1a1e27;
+  transition: fill 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lamp-room-viewport.lamp-on .lamp-metal-part {
+  fill: #282f3e;
+}
+
+.lamp-shade-outer {
+  fill: #151821;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1.5;
+  transition: fill 0.5s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.5s ease;
+}
+
+.lamp-room-viewport.lamp-on .lamp-shade-outer {
+  fill: #1e2432;
+  stroke: rgba(251, 191, 36, 0.4);
+}
+
+.lamp-shade-inner {
+  fill: #12141c;
+  transition: fill 0.5s cubic-bezier(0.22, 1, 0.36, 1), filter 0.5s ease;
+}
+
+.lamp-room-viewport.lamp-on .lamp-shade-inner {
+  fill: #f59e0b;
+  filter: drop-shadow(0 0 14px rgba(251, 191, 36, 0.85));
+}
+
+/* Incandescent Light Bulb */
+.lamp-bulb {
+  opacity: 0.18;
+  fill: #2c3444;
+  transition: opacity 0.55s cubic-bezier(0.25, 1, 0.5, 1), fill 0.55s ease, filter 0.65s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.lamp-room-viewport.lamp-on .lamp-bulb {
+  opacity: 1;
+  fill: #fffbeb;
+  filter: drop-shadow(0 0 18px #ffea79) drop-shadow(0 0 38px #f59e0b);
+  animation: bulbWarmPulse 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes bulbWarmPulse {
+  0% {
+    filter: drop-shadow(0 0 16px #ffea79) drop-shadow(0 0 32px #f59e0b);
+  }
+  100% {
+    filter: drop-shadow(0 0 22px #fff7c2) drop-shadow(0 0 46px #fbbf24);
+  }
+}
+
+/* Lamp Base Glow when lit */
+.lamp-base-bevel {
+  fill: #141720;
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 1;
+  transition: all 0.5s ease;
+}
+
+.lamp-room-viewport.lamp-on .lamp-base-bevel {
+  stroke: rgba(251, 191, 36, 0.28);
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.18));
+}
+
+/* ==========================================================================
+   THE INTERACTIVE PULL SWITCH CORD (SILKY SMOOTH DYNAMICS)
+   ========================================================================== */
+.lamp-pull-switch-group {
+  cursor: grab;
+  user-select: none;
+  outline: none;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.lamp-pull-switch-group:active,
+.lamp-pull-switch-group.is-pulling {
+  cursor: grabbing;
+}
+
+.lamp-pull-chain {
+  stroke: #64748b;
+  stroke-width: 2.5;
+  stroke-dasharray: 4, 3;
+  stroke-linecap: round;
+  transition: stroke 0.4s ease;
+}
+
+.lamp-room-viewport.lamp-on .lamp-pull-chain {
+  stroke: #fbbf24;
+}
+
+.lamp-pull-bob {
+  fill: #475569;
+  stroke: #94a3b8;
+  stroke-width: 1.5;
+  transition: fill 0.35s ease, stroke 0.35s ease, filter 0.35s ease;
+}
+
+.lamp-room-viewport.lamp-on .lamp-pull-bob {
+  fill: #f59e0b;
+  stroke: #fef08a;
+  filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.65));
+}
+
+.lamp-pull-switch-group:hover .lamp-pull-bob {
+  stroke: #38bdf8;
+  filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.75));
+}
+
+.lamp-room-viewport.lamp-on .lamp-pull-switch-group:hover .lamp-pull-bob {
+  stroke: #ffffff;
+  filter: drop-shadow(0 0 14px rgba(254, 240, 138, 0.95));
+}
+
+/* Smooth Spring Recoil Animation when cord is released */
+@keyframes cordSmoothSpring {
+  0% {
+    transform: translateY(28px);
+  }
+  25% {
+    transform: translateY(-8px);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+  75% {
+    transform: translateY(-1.5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.lamp-pull-switch-group.snapping {
+  animation: cordSmoothSpring 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Subtle Pulsing Hint for Initial Darkness */
+.lamp-pull-hint {
+  position: absolute;
+  left: 235px;
+  top: 310px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(18, 22, 32, 0.88);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  padding: 6px 14px;
+  border-radius: 20px;
+  color: #fbbf24;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.28);
+  pointer-events: none;
+  animation: hintFloatPulse 2.6s ease-in-out infinite;
+  z-index: 30;
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lamp-room-viewport.lamp-on .lamp-pull-hint {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes hintFloatPulse {
+  0%, 100% {
+    transform: translateY(0);
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.2);
+  }
+  50% {
+    transform: translateY(-6px);
+    box-shadow: 0 0 26px rgba(245, 158, 11, 0.5);
+  }
+}
+
+/* ==========================================================================
+   VOLUMETRIC CONE OF WARM YELLOW LIGHT (SILKY SOFT BLOOM)
+   ========================================================================== */
+.lamp-light-cone-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
+}
+
+.lamp-light-cone {
+  position: absolute;
+  top: 90px;
+  left: 215px;
+  width: 980px;
+  height: 650px;
+  clip-path: polygon(15px 0%, 105px 0%, 980px 590px, 0px 590px);
+  background: linear-gradient(
+    140deg,
+    rgba(255, 238, 140, 0.44) 0%,
+    rgba(255, 214, 102, 0.34) 20%,
+    rgba(245, 158, 11, 0.18) 50%,
+    rgba(217, 119, 6, 0.05) 80%,
+    transparent 100%
+  );
+  filter: blur(16px);
+  opacity: 0;
+  transform-origin: 60px 0px;
+  transform: scaleY(0.75) scaleX(0.92);
+  transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1), transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lamp-room-viewport.lamp-on .lamp-light-cone {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Second Layer for Volumetric Core Soft Glow */
+.lamp-light-cone-core {
+  position: absolute;
+  top: 95px;
+  left: 220px;
+  width: 840px;
+  height: 590px;
+  clip-path: polygon(25px 0%, 85px 0%, 840px 550px, 60px 550px);
+  background: radial-gradient(
+    circle at 55px 0px,
+    rgba(255, 255, 220, 0.58) 0%,
+    rgba(255, 224, 102, 0.3) 25%,
+    rgba(245, 158, 11, 0.11) 60%,
+    transparent 90%
+  );
+  filter: blur(26px);
+  opacity: 0;
+  transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lamp-room-viewport.lamp-on .lamp-light-cone-core {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   FLOATING, GLOWING DUST PARTICLES (IN LIGHT BEAM)
+   ========================================================================== */
+.lamp-dust-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0;
+  transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lamp-room-viewport.lamp-on .lamp-dust-canvas {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   THE "WELCOME BACK" LOGIN FORM (ILLUMINATED IN LIGHT)
+   ========================================================================== */
+.lamp-form-wrapper {
+  position: relative;
+  width: 450px;
+  margin-left: auto;
+  margin-right: 2.5rem;
+  z-index: 20;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(30px) scale(0.97);
+  transition: 
+    opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0.75s;
+  pointer-events: none;
+}
+
+/* Revealed State: When Lamp is Lit */
+.lamp-room-viewport.lamp-on .lamp-form-wrapper {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0) scale(1);
+  pointer-events: auto;
+}
+
+/* Glassmorphism Card in Warm Light */
+.lamp-login-card {
+  position: relative;
+  background: rgba(14, 17, 26, 0.8);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+  border: 1px solid rgba(251, 191, 36, 0.24);
+  border-radius: 24px;
+  padding: 2.2rem 2.2rem;
+  box-shadow: 
+    0 22px 55px rgba(0, 0, 0, 0.65),
+    0 0 38px rgba(245, 158, 11, 0.14),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  overflow: visible;
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+.lamp-login-card:hover {
+  border-color: rgba(251, 191, 36, 0.4);
+  box-shadow: 
+    0 26px 65px rgba(0, 0, 0, 0.75),
+    0 0 48px rgba(245, 158, 11, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+/* Top Accent Shimmer in Warm Gold */
+.lamp-card-top-shine {
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(254, 240, 138, 0.6), transparent);
+}
+
+/* Card Header */
+.lamp-card-header {
+  margin-bottom: 1.35rem;
+  text-align: left;
+}
+
+.lamp-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.lamp-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #fbbf24;
+}
+
+.lamp-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fbbf24;
+  box-shadow: 0 0 8px #fbbf24;
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.lamp-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin-bottom: 0.3rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lamp-title-highlight {
+  background: linear-gradient(135deg, #ffffff 40%, #fef08a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.lamp-subtitle {
+  font-size: 0.84rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+/* Portal Role Switcher: Operator vs Master Admin */
+.lamp-role-tabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 1.15rem;
+}
+
+.lamp-role-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lamp-role-btn.active {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fef08a;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+}
+
+.lamp-role-btn.admin.active {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+}
+
+/* Subtabs: Sign In vs Create Account */
+.lamp-subtabs {
+  display: flex;
+  gap: 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 1.15rem;
+  padding-bottom: 0.35rem;
+}
+
+.lamp-subtab-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  padding: 0.2rem 0;
+  transition: color 0.2s ease;
+}
+
+.lamp-subtab-btn:hover {
+  color: #cbd5e1;
+}
+
+.lamp-subtab-btn.active {
+  color: #fbbf24;
+}
+
+.lamp-subtab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -0.4rem;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #fbbf24;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.7);
+  border-radius: 2px;
+}
+
+/* Alerts */
+.lamp-alert {
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lamp-alert.error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+
+.lamp-alert.success {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #6ee7b7;
+}
+
+/* Form Groups & Inputs */
+.lamp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.88rem;
+}
+
+.lamp-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  text-align: left;
+}
+
+.lamp-input-group label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  letter-spacing: 0.02em;
+}
+
+.lamp-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: rgba(10, 13, 20, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0 0.85rem;
+  height: 44px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lamp-input-wrap:focus-within {
+  border-color: #fbbf24;
+  background: rgba(10, 13, 20, 0.92);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+}
+
+.lamp-input-wrap .input-icon {
+  color: #64748b;
+  margin-right: 0.65rem;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.lamp-input-wrap:focus-within .input-icon {
+  color: #fbbf24;
+}
+
+.lamp-input-wrap input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-family: inherit;
+}
+
+.lamp-input-wrap input::placeholder {
+  color: #475569;
+}
+
+.lamp-pw-toggle {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.lamp-pw-toggle:hover {
+  color: #fbbf24;
+}
+
+/* Remember & Forgot Row */
+.lamp-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  margin-top: 0.1rem;
+}
+
+.lamp-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #94a3b8;
+  cursor: pointer;
+  user-select: none;
+}
+
+.lamp-checkbox-label input {
+  display: none;
+}
+
+.lamp-custom-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: all 0.2s;
+}
+
+.lamp-checkbox-label input:checked + .lamp-custom-check {
+  background: #f59e0b;
+  border-color: #fbbf24;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.lamp-forgot-link {
+  color: #fbbf24;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.lamp-forgot-link:hover {
+  color: #fef08a;
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   RUNAWAY DODGING LOGIN BUTTON ARENA
+   "Don't remove the login run feature until user fill all info"
+   ========================================================================== */
+.lamp-runaway-arena {
+  position: relative;
+  min-height: 94px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.4rem;
+  width: 100%;
+}
+
+.lamp-runaway-anchor {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+/* Base Runaway Button */
+.lamp-runaway-btn {
+  width: 100%;
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding: 0.78rem 1rem;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  user-select: none;
+  will-change: transform;
+  border: 1px solid transparent;
+}
+
+/* Stage 0: Multiple fields missing -> Active wild dodging */
+.lamp-runaway-btn.stage-0 {
+  background: linear-gradient(135deg, #ef4444 0%, #f59e0b 100%);
+  color: #ffffff;
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.35);
+  cursor: not-allowed;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Stage 1: One field left -> Slower, gentle evasion */
+.lamp-runaway-btn.stage-1 {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  color: #0d111b;
+  border-color: rgba(254, 240, 138, 0.5);
+  box-shadow: 0 0 22px rgba(245, 158, 11, 0.45);
+  cursor: not-allowed;
+  transition: transform 0.36s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Stage 2: ALL INFO FILLED -> Locked in & Ready to Click! */
+.lamp-runaway-btn.stage-2 {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%);
+  color: #0b0d14;
+  border-color: rgba(254, 240, 138, 0.7);
+  box-shadow: 0 0 28px rgba(245, 158, 11, 0.55);
+  cursor: pointer;
+  transform: translate(0px, 0px) !important;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.lamp-runaway-btn.stage-2:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 0 38px rgba(245, 158, 11, 0.8);
+  border-color: #ffffff;
+}
+
+.lamp-runaway-btn.stage-submitting {
+  background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+  opacity: 0.9;
+  cursor: wait;
+}
+
+/* Runaway Dynamic Feedback Caption */
+.lamp-runaway-caption {
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.lamp-runaway-caption.stage-0 {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.lamp-runaway-caption.stage-1 {
+  color: #fef08a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.lamp-runaway-caption.stage-2 {
+  color: #6ee7b7;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.15);
+}
+
+.caption-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.lamp-runaway-caption.stage-0 .caption-pulse-dot {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: pulse 1s infinite alternate;
+}
+
+.lamp-runaway-caption.stage-1 .caption-pulse-dot {
+  background: #fbbf24;
+  box-shadow: 0 0 8px #fbbf24;
+  animation: pulse 1.4s infinite alternate;
+}
+
+.lamp-runaway-caption.stage-2 .caption-pulse-dot {
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+}
+
+@keyframes pulse {
+  from { opacity: 0.4; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1.15); }
+}
+
+/* Divider */
+.lamp-divider {
+  position: relative;
+  text-align: center;
+  margin: 1.1rem 0 0.9rem;
+}
+
+.lamp-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lamp-divider span {
+  position: relative;
+  background: rgba(14, 17, 26, 0.95);
+  padding: 0 0.65rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.06em;
+}
+
+/* Social Buttons */
+.lamp-social-grid {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.lamp-social-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lamp-social-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(251, 191, 36, 0.3);
+  transform: translateY(-2px);
+  color: #ffffff;
+}
+
+.lamp-social-btn .social-svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* Master Admin Exclusive Mode (Google login explicitly removed) */
+.lamp-admin-exclusive-container {
+  margin-top: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.lamp-admin-exclusive-note {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.75rem;
+  color: #fef08a;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.lamp-return-user-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lamp-return-user-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(251, 191, 36, 0.35);
+  color: #fbbf24;
+  transform: translateY(-1px);
+}
+
+/* Quick Toggle Turn Off Helper Tooltip under card */
+.lamp-turnoff-hint {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.74rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.lamp-turnoff-hint:hover {
+  color: #fbbf24;
+}
+
+/* Responsive Scaling for Tablets and Mobile */
+@media (max-width: 1024px) {
+  .lamp-stage {
+    padding: 0 2rem;
+  }
+  
+  .lamp-container {
+    width: 360px;
+    height: 600px;
+  }
+  
+  .lamp-light-cone {
+    width: 750px;
+    left: 180px;
+  }
+}
+
+@media (max-width: 820px) {
+  .lamp-stage {
+    flex-direction: column;
+    justify-content: center;
+    padding: 1.5rem 1rem;
+  }
+
+  .lamp-container {
+    height: 380px;
+    width: 320px;
+    margin-bottom: -40px;
+  }
+
+  .lamp-form-wrapper {
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  .lamp-light-cone {
+    display: none;
+  }
+
+  .lamp-pull-hint {
+    left: 190px;
+    top: 220px;
+  }
+}
